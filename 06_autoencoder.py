@@ -2,24 +2,27 @@ import tensorflow as tf
 import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
 
-import matplotlib # to plot images
+import matplotlib  # to plot images
+
 # Force matplotlib to not use any X-server backend.
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
+
 ## Visualizing reconstructions
 def vis(images, save_name):
     dim = images.shape[0]
     n_image_rows = int(np.ceil(np.sqrt(dim)))
-    n_image_cols = int(np.ceil(dim * 1.0/n_image_rows))
-    gs = gridspec.GridSpec(n_image_rows,n_image_cols,top=1., bottom=0., right=1., left=0., hspace=0., wspace=0.)
-    for g,count in zip(gs,range(int(dim))):
+    n_image_cols = int(np.ceil(dim * 1.0 / n_image_rows))
+    gs = gridspec.GridSpec(n_image_rows, n_image_cols, top=1., bottom=0., right=1., left=0., hspace=0., wspace=0.)
+    for g, count in zip(gs, range(int(dim))):
         ax = plt.subplot(g)
-        ax.imshow(images[count,:].reshape((28,28)))
+        ax.imshow(images[count, :].reshape((28, 28)))
         ax.set_xticks([])
         ax.set_yticks([])
     plt.savefig(save_name + '_vis.png')
+
 
 mnist_width = 28
 n_visible = mnist_width * mnist_width
@@ -52,6 +55,7 @@ def model(X, mask, W, b, W_prime, b_prime):
     Z = tf.nn.sigmoid(tf.matmul(Y, W_prime) + b_prime)  # reconstructed input
     return Z
 
+
 # build model graph
 Z = model(X, mask, W, b, W_prime, b_prime)
 
@@ -69,7 +73,7 @@ with tf.Session() as sess:
     tf.global_variables_initializer().run()
 
     for i in range(100):
-        for start, end in zip(range(0, len(trX), 128), range(128, len(trX)+1, 128)):
+        for start, end in zip(range(0, len(trX), 128), range(128, len(trX) + 1, 128)):
             input_ = trX[start:end]
             mask_np = np.random.binomial(1, 1 - corruption_level, input_.shape)
             sess.run(train_op, feed_dict={X: input_, mask: mask_np})
@@ -81,6 +85,6 @@ with tf.Session() as sess:
     predicted_imgs = sess.run(predict_op, feed_dict={X: teX[:100], mask: mask_np})
     input_imgs = teX[:100]
     # plot the reconstructed images
-    vis(predicted_imgs,'pred')
-    vis(input_imgs,'in')
+    vis(predicted_imgs, 'pred')
+    vis(input_imgs, 'in')
     print('Done')

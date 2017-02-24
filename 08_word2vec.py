@@ -3,6 +3,7 @@ import collections
 import numpy as np
 import tensorflow as tf
 import matplotlib
+
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 
@@ -11,21 +12,21 @@ batch_size = 20
 # Dimension of the embedding vector. Two too small to get
 # any meaningful embeddings, but let's make it 2 for simple visualization
 embedding_size = 2
-num_sampled = 15    # Number of negative examples to sample.
+num_sampled = 15  # Number of negative examples to sample.
 
 # Sample sentences
 sentences = ["the quick brown fox jumped over the lazy dog",
-            "I love cats and dogs",
-            "we all love cats and dogs",
-            "cats and dogs are great",
-            "sung likes cats",
-            "she loves dogs",
-            "cats can be very independent",
-            "cats are great companions when they want to be",
-            "cats are playful",
-            "cats are natural hunters",
-            "It's raining cats and dogs",
-            "dogs and cats love sung"]
+             "I love cats and dogs",
+             "we all love cats and dogs",
+             "cats and dogs are great",
+             "sung likes cats",
+             "she loves dogs",
+             "cats can be very independent",
+             "cats are great companions when they want to be",
+             "cats are playful",
+             "cats are natural hunters",
+             "It's raining cats and dogs",
+             "dogs and cats love sung"]
 
 # sentences to words and count
 words = " ".join(sentences).split()
@@ -33,8 +34,8 @@ count = collections.Counter(words).most_common()
 print ("Word count", count[:5])
 
 # Build dictionaries
-rdic = [i[0] for i in count] #reverse dic, idx -> word
-dic = {w: i for i, w in enumerate(rdic)} #dic, word -> id
+rdic = [i[0] for i in count]  # reverse dic, idx -> word
+dic = {w: i for i, w in enumerate(rdic)}  # dic, word -> id
 voc_size = len(dic)
 
 # Make indexed word data
@@ -44,8 +45,8 @@ print('Sample data', data[:10], [rdic[t] for t in data[:10]])
 # Let's make a training data for window size 1 for simplicity
 # ([the, brown], quick), ([quick, fox], brown), ([brown, jumped], fox), ...
 cbow_pairs = [];
-for i in range(1, len(data)-1) :
-    cbow_pairs.append([[data[i-1], data[i+1]], data[i]]);
+for i in range(1, len(data) - 1):
+    cbow_pairs.append([[data[i - 1], data[i + 1]], data[i]]);
 print('Context pairs', cbow_pairs[:10])
 
 # Let's make skip-gram pairs
@@ -56,15 +57,17 @@ for c in cbow_pairs:
     skip_gram_pairs.append([c[1], c[0][1]])
 print('skip-gram pairs', skip_gram_pairs[:5])
 
+
 def generate_batch(size):
     assert size < len(skip_gram_pairs)
-    x_data=[]
+    x_data = []
     y_data = []
     r = np.random.choice(range(len(skip_gram_pairs)), size, replace=False)
     for i in r:
         x_data.append(skip_gram_pairs[i][0])  # n dim
         y_data.append([skip_gram_pairs[i][1]])  # n, 1 dim
     return x_data, y_data
+
 
 # generate_batch test
 print ('Batches (x, y)', generate_batch(3))
@@ -78,11 +81,11 @@ with tf.device('/cpu:0'):
     # Look up embeddings for inputs.
     embeddings = tf.Variable(
         tf.random_uniform([voc_size, embedding_size], -1.0, 1.0))
-    embed = tf.nn.embedding_lookup(embeddings, train_inputs) # lookup table
+    embed = tf.nn.embedding_lookup(embeddings, train_inputs)  # lookup table
 
 # Construct the variables for the NCE loss
 nce_weights = tf.Variable(
-    tf.random_uniform([voc_size, embedding_size],-1.0, 1.0))
+    tf.random_uniform([voc_size, embedding_size], -1.0, 1.0))
 nce_biases = tf.Variable(tf.zeros([voc_size]))
 
 # Compute the average NCE loss for the batch.
@@ -102,19 +105,19 @@ with tf.Session() as sess:
     for step in range(100):
         batch_inputs, batch_labels = generate_batch(batch_size)
         _, loss_val = sess.run([train_op, loss],
-                feed_dict={train_inputs: batch_inputs, train_labels: batch_labels})
+                               feed_dict={train_inputs: batch_inputs, train_labels: batch_labels})
         if step % 10 == 0:
-          print("Loss at ", step, loss_val) # Report the loss
+            print("Loss at ", step, loss_val)  # Report the loss
 
     # Final embeddings are ready for you to use. Need to normalize for practical use
     trained_embeddings = embeddings.eval()
 
 # Show word2vec if dim is 2
 if trained_embeddings.shape[1] == 2:
-    labels = rdic[:10] # Show top 10 words
+    labels = rdic[:10]  # Show top 10 words
     for i, label in enumerate(labels):
-        x, y = trained_embeddings[i,:]
+        x, y = trained_embeddings[i, :]
         plt.scatter(x, y)
         plt.annotate(label, xy=(x, y), xytext=(5, 2),
-            textcoords='offset points', ha='right', va='bottom')
+                     textcoords='offset points', ha='right', va='bottom')
     plt.savefig("word2vec.png")
