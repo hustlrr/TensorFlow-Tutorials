@@ -3,7 +3,7 @@
 import tensorflow as tf
 import numpy as np
 from tensorflow.examples.tutorials.mnist import input_data
-
+import time
 
 def init_weights(shape):
     return tf.Variable(tf.random_normal(shape, stddev=0.01))
@@ -48,7 +48,8 @@ with tf.Session() as sess:
         for start, end in zip(range(0, len(trX), 128), range(128, len(trX)+1, 128)):
             sess.run(train_op, feed_dict={X: trX[start:end], Y: trY[start:end],
                                           p_keep_input: 0.8, p_keep_hidden: 0.5})
-        print(i, np.mean(np.argmax(teY, axis=1) ==
+        print(i, time.strftime("%Y-%m-%d %H:%M:%S", time.localtime()),
+              np.mean(np.argmax(teY, axis=1) ==
                          sess.run(predict_op, feed_dict={X: teX, 
                                                          p_keep_input: 1.0,
                                                          p_keep_hidden: 1.0})))
